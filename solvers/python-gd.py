@@ -1,7 +1,8 @@
-import numpy as np
+from benchopt import BaseSolver, safe_import_context
 
-
-from benchopt import BaseSolver
+with safe_import_context() as import_ctx:
+    import numpy as np
+    get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
 
 
 class Solver(BaseSolver):
@@ -11,33 +12,35 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {'use_acceleration': [False, True]}
 
-    def set_objective(self, X, y, fit_intercept=False):
+    def set_objective(self, A, Y):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.X, self.y = X, y
-        self.fit_intercept = fit_intercept
+        self.A, self.Y = A, Y
 
     def run(self, n_iter):
-        L = np.linalg.norm(self.X, ord=2) ** 2
-        n_features = self.X.shape[1]
-        w = np.zeros(n_features)
-        w_acc = np.zeros(n_features)
-        w_old = np.zeros(n_features)
+        L = get_l2norm(self.A)
+
+        X_rec = np.zeros_like(self.A)
+        X_rec_acc = np.zeros_like(self.A)
+        X_rec_old = np.zeros_like(self.A)
+
         t_new = 1
         for _ in range(n_iter):
             if self.use_acceleration:
                 t_old = t_new
                 t_new = (1 + np.sqrt(1 + 4 * t_old ** 2)) / 2
-                w_old[:] = w  # x in Beck & Teboulle (2009) notation
-                w[:] = w_acc  # y in Beck & Teboulle (2009) notation
-            w -= self.X.T.dot(self.X.dot(w) - self.y) / L
+                X_rec_old[:] = X_rec  # x in Beck & Teboulle (2009) notation
+                X_rec[:] = X_rec_acc  # y in Beck & Teboulle (2009) notation
+            X_rec -= self.A.T @ (self.A  @ X_rec - self.Y) / L
             if self.use_acceleration:
-                w_acc[:] = w + (t_old - 1.) / t_new * (w - w_old)
-        self.w = w
+                X_rec_acc[:] = (
+                    X_rec + (t_old - 1.) / t_new * (X_rec - X_rec_old)
+                )
+        self.X_rec = X_rec
 
     def get_result(self):
         # The outputs of this function are the arguments of the
         # `compute` method of the objective.
         # They are customizable.
-        return self.w
+        return self.X_rec

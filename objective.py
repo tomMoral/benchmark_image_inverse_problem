@@ -6,33 +6,46 @@ with safe_import_context() as import_ctx:
     import numpy as np
 
 
-class Objective(BaseObjective):
-    name = "Ordinary Least Squares"
+def psnr(rec, ref):
+    """Compute the peak signal-to-noise ratio for grey images in [0, 1].
+    Parameters
+    ----------
+    rec : numpy.array, shape (height, width)
+        reconstructed image
+    ref : numpy.array, shape (height, width)
+        original image
+    Returns
+    -------
+    psnr : float
+        psnr of the reconstructed image
+    """
+    mse = np.square(rec - ref).mean()
+    psnr = 10 * np.log10(1 / mse)
 
-    # All parameters 'p' defined here are available as 'self.p'
-    parameters = {
-        'fit_intercept': [False],
-    }
+    return psnr
+
+
+class Objective(BaseObjective):
+    name = "Image Inverse Problem"
 
     def get_one_solution(self):
         # Return one solution. This should be compatible with 'self.compute'.
-        return np.zeros(self.X.shape[1])
+        return np.zeros(self.X_ref)
 
-    def set_data(self, X, y):
+    def set_data(self, A, Y, X_ref):
         # The keyword arguments of this function are the keys of the `data`
         # dict in the `get_data` function of the dataset.
         # They are customizable.
-        self.X, self.y = X, y
+        self.A, self.Y, self.X_ref = A, Y, X_ref
 
-    def compute(self, beta):
+    def compute(self, X_rec):
         # The arguments of this function are the outputs of the
         # `get_result` method of the solver.
         # They are customizable.
-        diff = self.y - self.X.dot(beta)
-        return .5 * diff.dot(diff)
+        return dict(psnr=psnr(X_rec, self.X_ref))
 
     def to_dict(self):
         # The output of this function are the keyword arguments
         # for the `set_objective` method of the solver.
         # They are customizable.
-        return dict(X=self.X, y=self.y, fit_intercept=self.fit_intercept)
+        return dict(A=self.A, Y=self.Y)
