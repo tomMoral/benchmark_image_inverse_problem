@@ -1,10 +1,10 @@
 from benchopt import BaseSolver, safe_import_context
 from math import sqrt
-import bm3d
 
 with safe_import_context() as import_ctx:
     import numpy as np
     get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
+    load_denoiser = import_ctx.import_from('denoisers', 'load_denoiser')
 
 
 class Solver(BaseSolver):
@@ -14,13 +14,14 @@ class Solver(BaseSolver):
     stopping_strategy = 'callback'
 
     # any parameter defined here is accessible as a class attribute
-    parameters = {'use_acceleration': [False, True]}
+    parameters = {'denoiser_name': ['bm3d', 'nlm']}
 
     def set_objective(self, A, Y, X_shape):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
         self.A, self.Y, self.X_shape = A, Y.flatten(), X_shape
+        self.denoiser = load_denoiser(self.denoiser_name)
 
     def run(self, callback):
         L = get_l2norm(self.A)
@@ -33,7 +34,7 @@ class Solver(BaseSolver):
             X_rec = X_rec.flatten()
             u = X_rec -  t * self.A.T @ (self.A  @ X_rec - self.Y) / L
             u = u.reshape(self.X_shape)
-            X_rec = bm3d.bm3d(u, sigma_psd = sqrt(t))
+            X_rec = self.denoiser(image=u, sigma = sqrt(t))
 
         self.X_rec = X_rec
 
