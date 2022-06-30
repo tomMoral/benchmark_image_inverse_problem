@@ -9,24 +9,26 @@ class Solver(BaseSolver):
     """Gradient descent solver, optionally accelerated."""
     name = 'GD'
 
+    stopping_strategy = 'callback'
+
     # any parameter defined here is accessible as a class attribute
     parameters = {'use_acceleration': [False, True]}
 
-    def set_objective(self, A, Y):
+    def set_objective(self, A, Y, X_shape):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.A, self.Y = A, Y
+        self.A, self.Y, self.X_shape = A, Y.flatten(), X_shape
 
-    def run(self, n_iter):
+    def run(self, callback):
         L = get_l2norm(self.A)
 
-        X_rec = np.zeros_like(self.A)
-        X_rec_acc = np.zeros_like(self.A)
-        X_rec_old = np.zeros_like(self.A)
+        X_rec = np.zeros(np.prod(self.X_shape))
+        X_rec_acc = np.zeros_like(X_rec)
+        X_rec_old = np.zeros_like(X_rec)
 
         t_new = 1
-        for _ in range(n_iter):
+        while callback(X_rec.reshape(self.X_shape)):
             if self.use_acceleration:
                 t_old = t_new
                 t_new = (1 + np.sqrt(1 + 4 * t_old ** 2)) / 2
@@ -37,7 +39,7 @@ class Solver(BaseSolver):
                 X_rec_acc[:] = (
                     X_rec + (t_old - 1.) / t_new * (X_rec - X_rec_old)
                 )
-        self.X_rec = X_rec
+        self.X_rec = X_rec.reshape(self.X_shape)
 
     def get_result(self):
         # The outputs of this function are the arguments of the

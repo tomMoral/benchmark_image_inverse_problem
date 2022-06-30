@@ -16,7 +16,8 @@ def get_l2norm(A, n_iter=100):
     return np.sqrt(np.linalg.norm(AtA @ x))
 
 
-def make_blur(type_A, height, size=27, std=8):
+def make_blur(type_A, x_shape, size=27, std=8):
+    img_size = np.prod(x_shape)
     if type_A == 'denoising':
         A = LinearOperator(
                 dtype=np.float64,
@@ -24,7 +25,7 @@ def make_blur(type_A, height, size=27, std=8):
                 matmat=lambda X: X,
                 rmatvec=lambda x: x,
                 rmatmat=lambda X: X,
-                shape=(height, height),
+                shape=(img_size, img_size),
             )
     elif type_A == 'deblurring':
         filt = np.outer(
@@ -33,10 +34,18 @@ def make_blur(type_A, height, size=27, std=8):
         filt /= filt.sum()
         A = LinearOperator(
                 dtype=np.float64,
-                matvec=lambda x: fftconvolve(x, filt, mode='same'),
-                matmat=lambda X: fftconvolve(X, filt, mode='same'),
-                rmatvec=lambda x: fftconvolve(x, filt, mode='same'),
-                rmatmat=lambda X: fftconvolve(X, filt, mode='same'),
-                shape=(height, height),
+                matvec=lambda x: fftconvolve(
+                    x.reshape(x_shape), filt, mode='same'
+                ).flatten(),
+                matmat=lambda X: fftconvolve(
+                    X.reshape(-1, x_shape), filt, mode='same'
+                ).flatten(),
+                rmatvec=lambda x: fftconvolve(
+                    x.reshape(x_shape), filt, mode='same'
+                ).flatten(),
+                rmatmat=lambda X: fftconvolve(
+                    X.reshape(-1, x_shape), filt, mode='same'
+                ).flatten(),
+                shape=(img_size, img_size),
             )
     return A

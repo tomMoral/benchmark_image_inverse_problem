@@ -36,12 +36,12 @@ class Dataset(BaseDataset):
         self.type_A = type_A
 
     def set_A(self, height):
-        return make_blur(self.type_A, height,
+        return make_blur(self.type_A, (self.img_size, self.img_size),
                          self.size_blur, self.std_blur)
 
     def get_data(self):
         rng = np.random.RandomState(self.random_state)
-        img = rng.random.randn(self.img_size, self.img_size)
+        img = rng.randn(self.img_size, self.img_size)
         img = img / 255.0
         A = self.set_A(self.img_size)
         Y = (A @ img + rng.normal(0, self.std_noise, size=img.shape))

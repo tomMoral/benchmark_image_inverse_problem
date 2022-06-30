@@ -42,10 +42,10 @@ class Objective(BaseObjective):
         # The arguments of this function are the outputs of the
         # `get_result` method of the solver.
         # They are customizable.
-        return dict(psnr=psnr(X_rec, self.X_ref))
+        return dict(value=-psnr(X_rec, self.X_ref))
 
     def to_dict(self):
         # The output of this function are the keyword arguments
         # for the `set_objective` method of the solver.
         # They are customizable.
-        return dict(A=self.A, Y=self.Y)
+        return dict(A=self.A, Y=self.Y, X_shape=self.X_ref.shape)
