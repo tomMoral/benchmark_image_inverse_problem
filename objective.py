@@ -43,7 +43,7 @@ class Objective(BaseObjective):
         # `get_result` method of the solver.
         # They are customizable.
         psnr_ = psnr(X_rec, self.X_ref)
-        return dict(value=-psnr_, psnr=psnr_)
+        return dict(value=psnr_, psnr=psnr_)
 
     def to_dict(self):
         # The output of this function are the keyword arguments
