@@ -22,7 +22,7 @@ def psnr(rec, ref):
     mse = np.square(rec - ref).mean()
     psnr = 10 * np.log10(1 / mse)
 
-    return psnr
+    return mse, psnr
 
 
 class Objective(BaseObjective):
@@ -42,8 +42,8 @@ class Objective(BaseObjective):
         # The arguments of this function are the outputs of the
         # `get_result` method of the solver.
         # They are customizable.
-        psnr_ = psnr(X_rec, self.X_ref)
-        return dict(value=psnr_, psnr=psnr_)
+        mse, psnr_ = psnr(X_rec, self.X_ref)
+        return dict(value=mse, psnr=psnr_)
 
     def to_dict(self):
         # The output of this function are the keyword arguments
