@@ -1,8 +1,8 @@
-from pickletools import optimize
 from benchopt import BaseSolver, safe_import_context
+from benchopt.stopping_criterion import SufficientProgressCriterion
 
 with safe_import_context() as import_ctx:
-    import ipdb
+    # import ipdb
     import numpy as np
     import torch
 
@@ -17,7 +17,9 @@ class Solver(BaseSolver):
 
     name = "DIP"
 
-    stopping_strategy = "callback"
+    stopping_criterion = SufficientProgressCriterion(
+        patience=50, strategy="callback"
+    )
 
     # any parameter defined here is accessible as a class attribute
 
@@ -27,20 +29,22 @@ class Solver(BaseSolver):
         # They are customizable.
         self.A, self.Y, self.X_shape = A, Y.flatten(), X_shape
 
+    @staticmethod
+    def get_next(stop_val):
+        return stop_val + 1
+
     def run(self, callback):
-        dtype = torch.FloatTensor
-        pad = "zero"
+        dtype = torch.cuda.FloatTensor
+        pad = "reflection"
         var = 1.0 / 10
         lr = 1e-3
-        # max_it = 1000
         reg_noise_std = 1.0 / 30
-
-        # print(self.Y.shape)
+        input_depth = 32
 
         net = get_net(
-            1,
+            input_depth,
             "skip",
-            pad,
+            pad=pad,
             n_channels=1,
             skip_n33d=128,
             skip_n33u=128,
@@ -53,13 +57,14 @@ class Solver(BaseSolver):
 
         Y_torch = np_to_torch(self.Y.reshape(self.X_shape)).type(dtype)
 
-        noise_input_saved = var * torch.rand_like(Y_torch)
+        noise_input_saved = var * torch.rand(
+            1, input_depth, self.X_shape[0], self.X_shape[1]
+        ).type(dtype)
 
         optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 
-        # ipdb.set_trace()
         out = net(noise_input_saved)
-        # print("Before while")
+
         while callback(torch_to_np(out)):
             noise_input = noise_input_saved + reg_noise_std * torch.randn_like(
                 noise_input_saved
