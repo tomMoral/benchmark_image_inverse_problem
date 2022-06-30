@@ -33,14 +33,12 @@ class Solver(BaseSolver):
     def get_next(stop_val):
         return stop_val + 1
 
-    def run(self, callback):
-        dtype = torch.cuda.FloatTensor
-        pad = "reflection"
-        var = 1.0 / 10
-        lr = 1e-3
-        reg_noise_std = 1.0 / 30
-        input_depth = 32
-
+    def run(self, callback, pad = "reflection", var = 1.0 / 10, lr = 1e-3, reg_noise_std = 1.0 / 30, input_depth = 32):
+        if torch.cuda.device_count()>0:
+            dtype = torch.cuda.FloatTensor
+        else:
+            dtype = torch.FloatTensor
+        
         net = get_net(
             input_depth,
             "skip",
