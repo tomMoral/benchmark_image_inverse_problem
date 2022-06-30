@@ -14,7 +14,10 @@ class Solver(BaseSolver):
     stopping_strategy = 'callback'
 
     # any parameter defined here is accessible as a class attribute
-    parameters = {'denoiser_name': ['bm3d', 'nlm']}
+    parameters = {
+        'denoiser_name': ['bm3d', 'nlm'],
+        'tau' : [0.01, 0.1]
+                    }
 
     def set_objective(self, A, Y, X_shape):
         # The arguments of this function are the results of the
@@ -29,12 +32,10 @@ class Solver(BaseSolver):
         X_rec = np.zeros(self.X_shape)
 
         while callback(X_rec):
-            # TODO : choice of t?
-            t = 0.1
             X_rec = X_rec.flatten()
-            u = X_rec -  t * self.A.T @ (self.A  @ X_rec - self.Y) / L
+            u = X_rec -  self.tau * self.A.T @ (self.A  @ X_rec - self.Y) / L
             u = u.reshape(self.X_shape)
-            X_rec = self.denoiser(image=u, sigma = sqrt(t))
+            X_rec = self.denoiser(image=u, sigma = sqrt(self.tau))
 
         self.X_rec = X_rec
 
