@@ -19,7 +19,8 @@ class Dataset(BaseDataset):
         'size_blur': [27],
         'std_blur': [2.],
         'subsampling': [4],
-        'type_A': ['deblurring'],
+        #'type_A': ['deblurring'],
+        'type_A': ['denoising'],
     }
 
     def __init__(self, std_noise=0.3,
