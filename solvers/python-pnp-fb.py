@@ -1,4 +1,5 @@
 from benchopt import BaseSolver, safe_import_context
+from math import sqrt
 import bm3d
 
 with safe_import_context() as import_ctx:
@@ -27,13 +28,12 @@ class Solver(BaseSolver):
         X_rec = np.zeros(self.X_shape)
 
         while callback(X_rec):
-            # TODO : choice of t
+            # TODO : choice of t?
             t = 0.1
             X_rec = X_rec.flatten()
             u = X_rec -  t * self.A.T @ (self.A  @ X_rec - self.Y) / L
             u = u.reshape(self.X_shape)
-            # TODO : choice of sigma_psd
-            X_rec = bm3d.bm3d(u, sigma_psd = 0.1)
+            X_rec = bm3d.bm3d(u, sigma_psd = sqrt(t))
 
         self.X_rec = X_rec
 
