@@ -32,11 +32,11 @@ class Objective(BaseObjective):
         # Return one solution. This should be compatible with 'self.compute'.
         return np.zeros(self.X_ref)
 
-    def set_data(self, A, Y, X_ref):
+    def set_data(self, filt, A, Y, X_ref):
         # The keyword arguments of this function are the keys of the `data`
         # dict in the `get_data` function of the dataset.
         # They are customizable.
-        self.A, self.Y, self.X_ref = A, Y, X_ref
+        self.filt, self.A, self.Y, self.X_ref = filt, A, Y, X_ref
 
     def compute(self, X_rec):
         # The arguments of this function are the outputs of the
@@ -49,4 +49,4 @@ class Objective(BaseObjective):
         # The output of this function are the keyword arguments
         # for the `set_objective` method of the solver.
         # They are customizable.
-        return dict(A=self.A, Y=self.Y, X_shape=self.X_ref.shape)
+        return dict(filt=self.filt, A=self.A, Y=self.Y, X_shape=self.X_ref.shape)

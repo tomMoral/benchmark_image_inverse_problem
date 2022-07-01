@@ -27,6 +27,8 @@ def make_blur(type_A, x_shape, size=27, std=8):
                 rmatmat=lambda X: X,
                 shape=(img_size, img_size),
             )
+        filt = np.zeros((size, size))
+        filt[size//2, size//2] = 1
     elif type_A == 'deblurring':
         filt = np.outer(
             gaussian(size, std),
@@ -48,4 +50,4 @@ def make_blur(type_A, x_shape, size=27, std=8):
                 ).flatten(),
                 shape=(img_size, img_size),
             )
-    return A
+    return filt, A

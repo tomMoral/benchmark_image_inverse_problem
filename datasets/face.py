@@ -19,9 +19,9 @@ class Dataset(BaseDataset):
         "std_noise": [0.02],
         "size_blur": [27],
         "std_blur": [2.0],
-        "subsampling": [1],
-        #'type_A': ['deblurring'],
-        "type_A": ["denoising"],
+        "subsampling": [4],
+        'type_A': ['deblurring'],
+        #"type_A": ["denoising"],
     }
 
     def __init__(
@@ -48,9 +48,9 @@ class Dataset(BaseDataset):
         rng = np.random.RandomState(self.random_state)
         img = misc.face(gray=True)[:: self.subsampling, :: self.subsampling]
         img = img / 255.0
-        A = self.set_A(img.shape)
+        filt, A = self.set_A(img.shape)
         Y = (A @ img.flatten()).reshape(img.shape)
         Y += rng.normal(0, self.std_noise, size=img.shape)
-        data = dict(A=A, Y=Y, X_ref=img)
+        data = dict(filt=filt, A=A, Y=Y, X_ref=img)
 
         return data

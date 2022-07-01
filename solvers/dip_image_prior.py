@@ -23,11 +23,11 @@ class Solver(BaseSolver):
 
     # any parameter defined here is accessible as a class attribute
 
-    def set_objective(self, A, Y, X_shape):
+    def set_objective(self, filt, A, Y, X_shape):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.A, self.Y, self.X_shape = A, Y.flatten(), X_shape
+        self.filt, self.A, self.Y, self.X_shape = filt, A, Y.flatten(), X_shape
 
     @staticmethod
     def get_next(stop_val):
@@ -39,6 +39,9 @@ class Solver(BaseSolver):
         else:
             dtype = torch.FloatTensor
         
+        blur_operator = torch.nn.Conv2d(1,1,self.filt.shape,padding='same', bias=False)
+        blur_operator.weight.data = np_to_torch(self.filt).type(dtype)
+
         net = get_net(
             input_depth,
             "skip",
@@ -68,7 +71,7 @@ class Solver(BaseSolver):
                 noise_input_saved
             )
             out = net(noise_input)
-            loss = mse(out, Y_torch)
+            loss = mse(blur_operator(out), Y_torch)
 
             loss.backward()
             optimizer.step()
