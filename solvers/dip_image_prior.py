@@ -41,6 +41,7 @@ class Solver(BaseSolver):
         
         blur_operator = torch.nn.Conv2d(1,1,self.filt.shape,padding='same', bias=False)
         blur_operator.weight.data = np_to_torch(self.filt).type(dtype)
+        blur_operator.requires_grad_(False)
 
         net = get_net(
             input_depth,
