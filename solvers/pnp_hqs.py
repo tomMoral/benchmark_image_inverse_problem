@@ -29,7 +29,6 @@ class Solver(BaseSolver):
         # `to_dict` method of the objective.
         # They are customizable.
         self.A, self.Y, self.X_shape = A, Y, X_shape
-        # TODO : get self.sigma from objective
         self.sigma = 0.1
         self.denoiser = load_denoiser(self.denoiser_name)
         # TODO : add tolerance and maxiter as hyperparameters?

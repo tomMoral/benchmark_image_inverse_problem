@@ -26,12 +26,19 @@ class CG_prox_solver():
         self.tol = tol
         
 
-    def __call__(self, z, alpha, x0):
+    def __call__(self, z, alpha, x0=None):
         """
         compute arg min_x ||y-Ax||^2 + alpha * ||x-z||^2
+        
+        Args:
+            z (np.array): input, can flattened or not 
+            alpha (_type_): _description_
+            x0 (np.array): initialisation of conjugate gradient (optionnal)
+
+        Returns:
+            np.array: CG solution (same shape as z)
         """
         # x =  argmin_x ||y-Ax||^2 + alpha * ||x-z|| <=> (AtA + alpha I).x = (At.y + alpha z)
-        # assume flatten z if it not flattened
         input_shape = z.shape
         zf = z.flatten()
         AtA_plus_alphaI = LinearOperator(shape=(self.N, self.N), matvec=lambda x: self.A.T@ self.A @ x + alpha * x)
