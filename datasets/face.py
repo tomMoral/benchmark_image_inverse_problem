@@ -4,6 +4,7 @@ from benchopt import safe_import_context, BaseDataset
 with safe_import_context() as import_ctx:
     import numpy as np
     from scipy import misc
+    import matplotlib.pyplot as plt
     make_blur = import_ctx.import_from('shared', 'make_blur')
 
 
@@ -46,6 +47,11 @@ class Dataset(BaseDataset):
         A = self.set_A(img.shape)
         Y = (A @ img.flatten()).reshape(img.shape)
         Y += rng.normal(0, self.std_noise, size=img.shape)
-        data = dict(A=A, Y=Y, X_ref=img)
-
+        sigma_f = self.std_noise
+        # plt.imshow(img)
+        # plt.show()
+        
+        print(Y.shape)
+        #Y = Y*255 + np.sqrt(2) * np.random.randn(img.shape[0], img.shape[1])
+        data = dict(A=A, Y=Y, X_ref=img,sigma_f=sigma_f)
         return data

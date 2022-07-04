@@ -2,6 +2,7 @@ from benchopt import BaseSolver, safe_import_context
 
 with safe_import_context() as import_ctx:
     import numpy as np
+    import matplotlib.pyplot as plt
     get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
 
 
@@ -28,6 +29,10 @@ class Solver(BaseSolver):
         X_rec_old = np.zeros_like(X_rec)
 
         t_new = 1
+        plt.imshow(np.squeeze(self.Y.reshape((self.X_shape))))
+        plt.title("Y")
+        plt.show()
+        iteration = 0 
         while callback(X_rec.reshape(self.X_shape)):
             if self.use_acceleration:
                 t_old = t_new
@@ -39,7 +44,17 @@ class Solver(BaseSolver):
                 X_rec_acc[:] = (
                     X_rec + (t_old - 1.) / t_new * (X_rec - X_rec_old)
                 )
+            # plt.imshow(np.squeeze(X_rec.reshape((self.X_shape))))
+
+            # plt.title(f"Iteration: {str(iteration)}")
+            # plt.show()
+            iteration = iteration + 1
         self.X_rec = X_rec.reshape(self.X_shape)
+
+        plt.imshow(np.squeeze(X_rec.reshape((self.X_shape))))
+        plt.title(f"Result with acceleration: {str(self.use_acceleration)} after {str(iteration)} iterations")
+        plt.show()
+
 
     def get_result(self):
         # The outputs of this function are the arguments of the
