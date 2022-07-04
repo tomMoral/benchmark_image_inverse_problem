@@ -35,16 +35,14 @@ class Dataset(BaseDataset):
         self.random_state = random_state
         self.type_A = type_A
 
-    def set_A(self, img_shape):
-        return make_blur(self.type_A, img_shape, self.size_blur, self.std_blur)
-
     def get_data(self):
         rng = np.random.RandomState(self.random_state)
         img = rng.randn(self.img_size, self.img_size)
         img = img / 255.0
-        A = self.set_A(img.shape)
+        filt, A = make_blur(
+            self.type_A, img.shape, self.size_blur, self.std_blur
+        )
         Y = (A @ img.flatten()).reshape(img.shape)
         Y += rng.normal(0, self.std_noise, size=img.shape)
-        data = dict(A=A, Y=Y, X_ref=img)
 
-        return data
+        return dict(filt=filt, A=A, Y=Y, X_ref=img, sigma_f=self.std_noise)

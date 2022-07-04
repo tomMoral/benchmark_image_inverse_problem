@@ -1,18 +1,27 @@
+# WORK IN PROGRESS
+
+
 from benchopt import BaseSolver, safe_import_context
+from math import sqrt
 
 with safe_import_context() as import_ctx:
     import numpy as np
     get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
+    load_denoiser = import_ctx.import_from('denoisers', 'load_denoiser')
+    load_prox_df = import_ctx.import_from('proximal', 'load_prox_df')
 
 
 class Solver(BaseSolver):
     """Gradient descent solver, optionally accelerated."""
-    name = 'GD'
+    name = 'pnp-hqs'
 
     stopping_strategy = 'callback'
 
     # any parameter defined here is accessible as a class attribute
-    parameters = {'use_acceleration': [False, True]}
+    parameters = {
+        'denoiser_name': ['bm3d', 'nlm'],
+        'tau': [0.01, 0.1]
+    }
 
     def set_objective(self, filt, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
@@ -22,26 +31,21 @@ class Solver(BaseSolver):
         self.Y, self.X_shape = Y.flatten(), X_shape
         self.sigma_f = sigma_f
 
+        self.denoiser = load_denoiser(self.denoiser_name)
+        self.prox_f = load_prox_df(self.prox_df)
+
     def run(self, callback):
         L = get_l2norm(self.A)
 
-        X_rec = np.zeros(np.prod(self.X_shape))
-        X_rec_acc = np.zeros_like(X_rec)
-        X_rec_old = np.zeros_like(X_rec)
+        X_rec = np.zeros(self.X_shape)
 
-        t_new = 1
-        while callback(X_rec.reshape(self.X_shape)):
-            if self.use_acceleration:
-                t_old = t_new
-                t_new = (1 + np.sqrt(1 + 4 * t_old ** 2)) / 2
-                X_rec_old[:] = X_rec  # x in Beck & Teboulle (2009) notation
-                X_rec[:] = X_rec_acc  # y in Beck & Teboulle (2009) notation
-            X_rec -= self.A.T @ (self.A  @ X_rec - self.Y) / L
-            if self.use_acceleration:
-                X_rec_acc[:] = (
-                    X_rec + (t_old - 1.) / t_new * (X_rec - X_rec_old)
-                )
-        self.X_rec = X_rec.reshape(self.X_shape)
+        while callback(X_rec):
+            X_rec = X_rec.flatten()
+            u = X_rec - self.tau * self.A.T @ (self.A  @ X_rec - self.Y) / L
+            u = u.reshape(self.X_shape)
+            X_rec = self.denoiser(image=u, sigma=sqrt(self.tau))
+
+        self.X_rec = X_rec
 
     def get_result(self):
         # The outputs of this function are the arguments of the
