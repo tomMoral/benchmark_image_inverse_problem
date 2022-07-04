@@ -76,7 +76,6 @@ class Solver(BaseSolver):
 
             loss.backward()
             optimizer.step()
-            # print("Inside while")
 
         self.X_rec = torch_to_np(out)
 
