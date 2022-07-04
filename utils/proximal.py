@@ -1,6 +1,5 @@
 from scipy.sparse.linalg import cg
 from scipy.sparse.linalg import LinearOperator
-from scipy.sparse import identity
 
 def load_prox_df(A, y, maxiter=None, tol=None):
     """
@@ -21,11 +20,13 @@ class CG_prox_solver():
         """
         self.A = A
         self.y = y.flatten()
+        self.Aty = self.A.T @ self.y
         self.maxiter = maxiter
         self.M, self.N = A.shape
+        self.tol = tol
         
 
-    def __call__(self, z, alpha):
+    def __call__(self, z, alpha, x0):
         """
         compute arg min_x ||y-Ax||^2 + alpha * ||x-z||^2
         """
@@ -33,8 +34,7 @@ class CG_prox_solver():
         # assume flatten z if it not flattened
         input_shape = z.shape
         zf = z.flatten()
-        Id = identity(self.N, self.N)
-        AtA_plus_alphaI = LinearOperator(shape=(self.N, self.N), matvec=lambda x: self.A.T@ self.A + alpha * Id)
-        b = self.A.T @ self.y + alpha * zf
-        xhat = cg(AtA_plus_alphaI, b = b, tol=self.tol, maxiter=self.maxiter)
-        return xhat
+        AtA_plus_alphaI = LinearOperator(shape=(self.N, self.N), matvec=lambda x: self.A.T@ self.A @ x + alpha * x)
+        b = self.Aty + alpha * zf
+        xhat, _ = cg(AtA_plus_alphaI, b=b, x0=x0.flatten(), tol=self.tol, maxiter=self.maxiter)
+        return xhat.reshape(input_shape)

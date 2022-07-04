@@ -16,26 +16,38 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {
         'denoiser_name': ['bm3d', 'nlm'],
-        'tau' : [0.01, 0.1]
-                    }
+        'tau': [0.01, 0.1],
+        'start': ['zero', 'noisy']
+    }
 
-    def set_objective(self, A, Y, X_shape):
+    def skip(self, filt, A, Y, X_shape, sigma_f):
+        if self.start == "noisy" and A.shape[0] != A.shape[1]:
+            return True, "Noisiy start need square A"
+        return False, None
+
+    def set_objective(self, filt, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.A, self.Y, self.X_shape = A, Y.flatten(), X_shape
+        self.filt, self.A = filt, A
+        self.Y, self.X_shape = Y.flatten(), X_shape
         self.denoiser = load_denoiser(self.denoiser_name)
 
     def run(self, callback):
         L = get_l2norm(self.A)
 
-        X_rec = np.zeros(self.X_shape)
+        if self.start == "zero":
+            X_rec = np.zeros(self.X_shape)
+        elif self.start == "noisy":
+            X_rec = self.Y.reshape(self.X_shape)
+        else:
+            raise ValueError("unknown value for start.")
 
         while callback(X_rec):
             X_rec = X_rec.flatten()
-            u = X_rec -  self.tau * self.A.T @ (self.A  @ X_rec - self.Y) / L
+            u = X_rec - self.tau * self.A.T @ (self.A  @ X_rec - self.Y) / L
             u = u.reshape(self.X_shape)
-            X_rec = self.denoiser(image=u, sigma = sqrt(self.tau))
+            X_rec = self.denoiser(image=u, sigma=sqrt(self.tau))
 
         self.X_rec = X_rec
 

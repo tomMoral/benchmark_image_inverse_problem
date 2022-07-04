@@ -12,7 +12,7 @@ with safe_import_context() as import_ctx:
 
 
 class Solver(BaseSolver):
-    """PnP half quadratic splitting, as proposed in https://arxiv.org/pdf/2008.13751.pdf (eqs 6.a, 6.b)"""
+    """PnP half quadratic splitting, as proposed in https://arxiv.org/pdf/2008.13751.pdf (see eqs 6.a, 6.b)"""
     name = 'pnp-hqs'
 
     stopping_strategy = 'callback'
@@ -20,34 +20,34 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {
         'denoiser_name': ['bm3d', 'nlm'],
-        'tau' : [0.01, 0.1],
-        'lambda_r' : [0.23]
+        'lambda_r' : [0.23],
+        'Kmax' : [50]
                     }
 
-    def set_objective(self, A, Y, X_shape):
+    def set_objective(self, filt, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.A, self.Y, self.X_shape = A, Y.flatten(), X_shape
+        self.A, self.Y, self.X_shape = A, Y, X_shape
         # TODO : get self.sigma from objective
         self.sigma = 0.1
         self.denoiser = load_denoiser(self.denoiser_name)
         # TODO : add tolerance and maxiter as hyperparameters?
         self.prox_f = load_prox_df(self.A, self.Y, maxiter=100, tol=0.0001)
+        self.sigmas_k = np.linspace(49/255, sigma_f, self.Kmax)
+        self.sigma_f = sigma_f
 
     def run(self, callback):
-        L = get_l2norm(self.A)
 
-        X_k = np.zeros(self.X_shape)
-        Z_k = self.Y.copy() # this will not work for all inverse problem
-
+        X_k = self.Y.copy()
+        Z_k = self.Y.copy() # this will not work for SR
+        i = 0
         while callback(X_k):
-            mu_k = 1 # TODO : choice of mu ?
-            alpha_k = mu_k*self.sigma**2
-            X_k = self.prox_f(Z_k, alpha=alpha_k)
-            sigma_k = sqrt(self.lambda_r / mu_k)
+            sigma_k = self.sigmas_k[i] if i < self.Kmax else self.sigma_f
+            alpha_k = self.lambda_r * self.sigma_f / sigma_k
+            X_k = self.prox_f(Z_k, alpha=alpha_k, x0=X_k)
             Z_k = self.denoiser(image=X_k, sigma = sigma_k) 
-
+            i += 1
         self.X_rec = Z_k 
 
     def get_result(self):
