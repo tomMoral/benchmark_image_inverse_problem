@@ -27,6 +27,7 @@ class Solver(BaseSolver):
         "pad": ["reflection"],
         "input_std": [0.1],
         "reg_noise_std": [0.03],
+        "net_type": ["skip"],
     }
 
     def set_objective(self, filt, A, Y, X_shape):
@@ -56,7 +57,7 @@ class Solver(BaseSolver):
 
         net = get_net(
             input_depth=self.input_depth,
-            NET_TYPE="skip",
+            net_type=self.net_type,
             pad=self.pad,
             n_channels=1,
             skip_n33d=128,

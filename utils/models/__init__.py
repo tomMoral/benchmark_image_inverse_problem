@@ -9,7 +9,7 @@ import torch
 
 def get_net(
     input_depth,
-    NET_TYPE,
+    net_type,
     pad,
     upsample_mode,
     n_channels=3,
@@ -20,10 +20,10 @@ def get_net(
     num_scales=5,
     downsample_mode="stride",
 ):
-    if NET_TYPE == "ResNet":
+    if net_type == "ResNet":
         # TODO
         net = ResNet(input_depth, 3, 10, 16, 1, nn.BatchNorm2d, False)
-    elif NET_TYPE == "skip":
+    elif net_type == "skip":
         net = skip(
             input_depth,
             n_channels,
@@ -44,7 +44,7 @@ def get_net(
             act_fun=act_fun,
         )
 
-    elif NET_TYPE == "texture_nets":
+    elif net_type == "texture_nets":
         net = get_texture_nets(
             inp=input_depth,
             ratios=[32, 16, 8, 4, 2, 1],
@@ -52,7 +52,7 @@ def get_net(
             pad=pad,
         )
 
-    elif NET_TYPE == "UNet":
+    elif net_type == "UNet":
         net = UNet(
             num_input_channels=input_depth,
             num_output_channels=3,
@@ -65,7 +65,7 @@ def get_net(
             need_sigmoid=True,
             need_bias=True,
         )
-    elif NET_TYPE == "identity":
+    elif net_type == "identity":
         assert input_depth == 3
         net = nn.Sequential()
     else:
