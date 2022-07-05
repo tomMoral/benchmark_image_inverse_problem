@@ -128,9 +128,9 @@ class Solver(BaseSolver):
             q_h = derivatives[:, 0, :, :] + mu_t_h
             q_v = derivatives[:, 1, :, :] + mu_t_v
             q_norm = torch.sqrt(torch.pow(q_h, 2) + torch.pow(q_v, 2))
-            q_norm[q_norm == 0] = self.weight / self.beta_t
+            q_norm[q_norm == 0] = self.tv_weight / self.beta_t
             q_norm = (
-                torch.clamp(q_norm - self.weight / self.beta_t, min=0) / q_norm
+                torch.clamp(q_norm - self.tv_weight / self.beta_t, min=0) / q_norm
             )
             t_h = (q_norm * q_h).detach().clone()
             t_v = (q_norm * q_v).detach().clone()
