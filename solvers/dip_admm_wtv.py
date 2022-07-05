@@ -33,7 +33,7 @@ class Solver(BaseSolver):
         "inner_iterations": [50],
     }
 
-    def set_objective(self, filt, A, Y, X_shape):
+    def set_objective(self, filt, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
@@ -133,10 +133,10 @@ class Solver(BaseSolver):
             weight = torch.div(
                 torch.pow(torch.norm(out - Y_torch), 2)
                 / (2 * self.X_shape[0] * self.X_shape[1]),
-                q_norm,
+                q_norm
             )
             weight = weight.detach().clone()
-            q_norm[q_norm == 0] = weight / self.beta_t
+            q_norm[q_norm == 0] = weight[q_norm == 0] / self.beta_t
             q_norm = torch.clamp(q_norm - weight / self.beta_t, min=0) / q_norm
             t_h = (q_norm * q_h).detach().clone()
             t_v = (q_norm * q_v).detach().clone()
