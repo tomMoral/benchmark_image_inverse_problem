@@ -103,7 +103,7 @@ class Solver(BaseSolver):
             out = net(noise_input)
             loss = mse(blur_operator(out), Y_torch)
             tv_pixel_norm = torch.norm(TV_operator(out), dim=1)
-            loss += self.tv_weight * mse(tv_pixel_norm, torch.zeros_like(out))
+            loss += self.tv_weight * mse(tv_pixel_norm, torch.zeros_like(tv_pixel_norm))
 
             loss.backward()
             optimizer.step()
