@@ -20,7 +20,7 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {
         'denoiser_name': ['bm3d', 'nlm'],
-        'lambda_r' : [0.23],
+        'lambda_r' : [0.5],
         'Kmax' : [50]
                     }
 
@@ -42,8 +42,8 @@ class Solver(BaseSolver):
         i = 0
         while callback(X_k):
             sigma_k = self.sigmas_k[i] if i < self.Kmax else self.sigma_f
-            alpha_k = self.lambda_r / sigma_k**2
-            X_k = self.prox_f(Z_k, alpha=alpha_k, x0=X_k) # = arg min_x ||Ax-y||**2/(2*sigma**2) + alpha_k / 2 ||x-z_k||**2
+            alpha_k = sigma_k**2 / self.lambda_r
+            X_k = self.prox_f(Z_k, alpha=alpha_k, x0=X_k) # = arg min_x alpha * ||Ax-y||**2/(2*sigma**2) +  ||x-z_k||**2 / 2
             Z_k = self.denoiser(image=X_k, sigma = sigma_k) 
             i += 1
         self.X_rec = Z_k 

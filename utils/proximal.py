@@ -3,7 +3,7 @@ from scipy.sparse.linalg import LinearOperator
 
 def load_prox_df(A, y, sigma, maxiter=None, tol=None):
     """
-    return a solver to compute arg min_x ||y-Ax||^2 / (2 sigma**2) + alpha * ||x-z||^2 / 2
+    return a solver to compute arg min_x alpha *||y-Ax||^2 / (2 sigma**2) +  ||x-z||^2 / 2
     """
     return CG_prox_solver(A, y, sigma, maxiter, tol)
 
@@ -11,7 +11,7 @@ class CG_prox_solver():
 
     def __init__(self, A, y, sigma : float, maxiter: int, tol : float):
         """
-        compute arg min_x ||y-Ax||^2 / (2 sigma**2) + alpha * ||x-z||^2 / 2 using scipy.linalg conjugate gradient solver
+        compute arg min_x alpha *||y-Ax||^2 / (2 sigma**2) +  ||x-z||^2 / 2 using scipy.linalg conjugate gradient solver
         Args:
             A (scipy.sparse.linalg.LinearOperator): (take flatten vector)
             y (np.array): _description_
@@ -29,7 +29,7 @@ class CG_prox_solver():
 
     def __call__(self, z, alpha, x0=None):
         """
-        compute arg min_x ||y-Ax||^2 / (2 sigma**2) + alpha * ||x-z||^2 / 2
+        compute arg min_x alpha * ||y-Ax||^2 / (2 sigma**2) +  ||x-z||^2 / 2
         
         Args:
             z (np.array): input, can flattened or not 
@@ -39,11 +39,11 @@ class CG_prox_solver():
         Returns:
             np.array: CG solution (same shape as z)
         """
-        # x = arg min_x ||y-Ax||^2 / (2 sigma**2) + alpha * ||x-z||^2 / 2  <=> (AtA + alpha*sigma**2 I).x = (At.y + alpha*sigma**2 z)
+        # x = arg min_x alpha * ||y-Ax||^2 / (2 sigma**2) + ||x-z||^2 / 2  <=> (AtA + sigma**2/alpha I).x = (At.y + sigma**2/alpha z)
         input_shape = z.shape
         zf = z.flatten()
-        alpha_s2 = alpha * self.sigma2
-        AtA_plus_alpha_s2_I = LinearOperator(shape=(self.N, self.N), matvec=lambda x: self.A.T@ self.A @ x + alpha_s2 * x)
-        b = self.Aty + alpha_s2 * zf
+        s2_d_alpha = self.sigma2 / alpha
+        AtA_plus_alpha_s2_I = LinearOperator(shape=(self.N, self.N), matvec=lambda x: self.A.T@ self.A @ x + s2_d_alpha * x)
+        b = self.Aty + s2_d_alpha * zf
         xhat, _ = cg(AtA_plus_alpha_s2_I, b=b, x0=x0.flatten(), tol=self.tol, maxiter=self.maxiter)
         return xhat.reshape(input_shape)
