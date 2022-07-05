@@ -29,12 +29,11 @@ class Solver(BaseSolver):
         # `to_dict` method of the objective.
         # They are customizable.
         self.A, self.Y, self.X_shape = A, Y, X_shape
-        self.sigma = 0.1
+        self.sigma_f = sigma_f
         self.denoiser = load_denoiser(self.denoiser_name)
         # TODO : add tolerance and maxiter as hyperparameters?
-        self.prox_f = load_prox_df(self.A, self.Y, maxiter=100, tol=0.0001)
+        self.prox_f = load_prox_df(self.A, self.Y, self.sigma_f, maxiter=100, tol=0.0001)
         self.sigmas_k = np.linspace(49/255, sigma_f, self.Kmax)
-        self.sigma_f = sigma_f
 
     def run(self, callback):
 
@@ -43,8 +42,8 @@ class Solver(BaseSolver):
         i = 0
         while callback(X_k):
             sigma_k = self.sigmas_k[i] if i < self.Kmax else self.sigma_f
-            alpha_k = self.lambda_r * self.sigma_f / sigma_k
-            X_k = self.prox_f(Z_k, alpha=alpha_k, x0=X_k)
+            alpha_k = self.lambda_r / sigma_k**2
+            X_k = self.prox_f(Z_k, alpha=alpha_k, x0=X_k) # = arg min_x ||Ax-y||**2/(2*sigma**2) + alpha_k / 2 ||x-z_k||**2
             Z_k = self.denoiser(image=X_k, sigma = sigma_k) 
             i += 1
         self.X_rec = Z_k 
