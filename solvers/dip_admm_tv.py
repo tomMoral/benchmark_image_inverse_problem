@@ -29,12 +29,12 @@ class Solver(BaseSolver):
         "input_std": [0.1],
         "reg_noise_std": [0.03],
         "net_type": ["skip"],
-        "tv_weight": 0.1,
-        "beta_t": 10,
-        "inner_iterations": 50,
+        "tv_weight": [0.1],
+        "beta_t": [10],
+        "inner_iterations": [50],
     }
 
-    def set_objective(self, filt, A, Y, X_shape):
+    def set_objective(self, filt, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
@@ -59,9 +59,7 @@ class Solver(BaseSolver):
         blur_operator.weight.data = np_to_torch(self.filt).type(dtype)
         blur_operator.requires_grad_(False)
 
-        TV_operator = torch.nn.Conv2d(
-            1, 2, (3,3), padding="same", bias=False
-        )
+        TV_operator = torch.nn.Conv2d(1, 2, (3, 3), padding="same", bias=False)
         TV_filt = torch.from_numpy(get_TV_filters())[None, :]
         TV_operator.weight.data = TV_filt.type(dtype)
         TV_operator.requires_grad_(False)
@@ -100,12 +98,12 @@ class Solver(BaseSolver):
         t_h = torch.zeros_like(out)
         t_v = torch.zeros_like(out)
 
-        mu_t_h = torch.zeros_like(out) 
-        mu_t_v = torch.zeros_like(out) 
+        mu_t_h = torch.zeros_like(out)
+        mu_t_v = torch.zeros_like(out)
 
         while callback(torch_to_np(out)):
 
-            for _ in range(self.inner_iterations):
+            for _ in range(int(self.inner_iterations)):
                 optimizer.zero_grad()
                 out = net(noise_input_saved)
 
@@ -113,8 +111,12 @@ class Solver(BaseSolver):
 
                 derivatives = TV_operator(out)
 
-                loss += (self.beta_t/2)*mse(derivatives[:,0,:,:],(t_h-mu_t_h).detach())
-                loss += (self.beta_t/2)*mse(derivatives[:,0,:,:],(t_v-mu_t_v).detach())
+                loss += (self.beta_t / 2) * mse(
+                    derivatives[:, 0, :, :], (t_h - mu_t_h).detach()
+                )
+                loss += (self.beta_t / 2) * mse(
+                    derivatives[:, 0, :, :], (t_v - mu_t_v).detach()
+                )
 
                 loss.backward()
                 optimizer.step()
@@ -122,18 +124,24 @@ class Solver(BaseSolver):
             out = net(noise_input_saved)
             derivatives = TV_operator(out)
 
-            #TV problem: second problem 
-            q_h                 = derivatives[:,0,:,:] + mu_t_h
-            q_v                 = derivatives[:,1,:,:] + mu_t_v
-            q_norm              = torch.sqrt(torch.pow(q_h,2) + torch.pow(q_v,2))
-            q_norm[q_norm == 0] = self.weight/self.beta_t
-            q_norm              = torch.clamp(q_norm - self.weight/self.beta_t , min=0)/q_norm
-            t_h                 = (q_norm * q_h).detach().clone()
-            t_v                 = (q_norm * q_v).detach().clone()
+            # TV problem: second problem
+            q_h = derivatives[:, 0, :, :] + mu_t_h
+            q_v = derivatives[:, 1, :, :] + mu_t_v
+            q_norm = torch.sqrt(torch.pow(q_h, 2) + torch.pow(q_v, 2))
+            q_norm[q_norm == 0] = self.weight / self.beta_t
+            q_norm = (
+                torch.clamp(q_norm - self.weight / self.beta_t, min=0) / q_norm
+            )
+            t_h = (q_norm * q_h).detach().clone()
+            t_v = (q_norm * q_v).detach().clone()
 
-            #Ascent step: updating lagrangian parameter
-            mu_t_h = (mu_t_h + (derivatives[:,0,:,:]- t_h)).detach().clone()
-            mu_t_v = (mu_t_v + (derivatives[:,1,:,:]- t_v)).detach().clone()
+            # Ascent step: updating lagrangian parameter
+            mu_t_h = (
+                (mu_t_h + (derivatives[:, 0, :, :] - t_h)).detach().clone()
+            )
+            mu_t_v = (
+                (mu_t_v + (derivatives[:, 1, :, :] - t_v)).detach().clone()
+            )
 
         self.X_rec = torch_to_np(out)
 

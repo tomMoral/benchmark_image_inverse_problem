@@ -30,7 +30,7 @@ class Solver(BaseSolver):
         "net_type": ["skip"],
     }
 
-    def set_objective(self, filt, A, Y, X_shape):
+    def set_objective(self, filt, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.

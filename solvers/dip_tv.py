@@ -29,10 +29,10 @@ class Solver(BaseSolver):
         "input_std": [0.1],
         "reg_noise_std": [0.03],
         "net_type": ["skip"],
-        "tv_weight": 0.1,
+        "tv_weight": [0.1],
     }
 
-    def set_objective(self, filt, A, Y, X_shape):
+    def set_objective(self, filt, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
@@ -57,9 +57,7 @@ class Solver(BaseSolver):
         blur_operator.weight.data = np_to_torch(self.filt).type(dtype)
         blur_operator.requires_grad_(False)
 
-        TV_operator = torch.nn.Conv2d(
-            1, 2, (3,3), padding="same", bias=False
-        )
+        TV_operator = torch.nn.Conv2d(1, 2, (3, 3), padding="same", bias=False)
         TV_filt = torch.from_numpy(get_TV_filters())[None, :]
         TV_operator.weight.data = TV_filt.type(dtype)
         TV_operator.requires_grad_(False)
@@ -105,7 +103,7 @@ class Solver(BaseSolver):
             out = net(noise_input)
             loss = mse(blur_operator(out), Y_torch)
             tv_pixel_norm = torch.norm(TV_operator(out), dim=1)
-            loss += self.tv_weight*mse(tv_pixel_norm, torch.zeros_like(out))
+            loss += self.tv_weight * mse(tv_pixel_norm, torch.zeros_like(out))
 
             loss.backward()
             optimizer.step()
