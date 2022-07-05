@@ -23,7 +23,7 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {
         "learning_rate": [0.1],
-        "optimizer": ["SGD"],
+        "optimizer": ["Adam"],
         "input_depth": [32],
         "pad": ["reflection"],
         "input_std": [0.1],
