@@ -58,7 +58,7 @@ class Solver(BaseSolver):
         blur_operator.requires_grad_(False)
 
         TV_operator = torch.nn.Conv2d(1, 2, (3, 3), padding="same", bias=False)
-        TV_filt = torch.from_numpy(get_TV_filters())[None, :]
+        TV_filt = torch.from_numpy(get_TV_filters())[:,None,:]
         TV_operator.weight.data = TV_filt.type(dtype)
         TV_operator.requires_grad_(False)
 
