@@ -24,13 +24,14 @@ class Solver(BaseSolver):
         'alpha' : [0.5], # TODO : tune alpha/ lambda_r values ?
                     }
 
-    def set_objective(self, filt, A, Y, X_shape, sigma_f):
+    def set_objective(self, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
         self.A, self.Y, self.X_shape = A, Y, X_shape
         self.sigma_f = sigma_f
         self.denoiser = load_denoiser(self.denoiser_name)
+
         # TODO : add tolerance and maxiter as hyperparameters?
         self.prox_f = load_prox_df(self.A, self.Y, self.sigma_f, maxiter=100, tol=0.0001)
         self.sigma_f = sigma_f
