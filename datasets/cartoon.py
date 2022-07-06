@@ -5,8 +5,28 @@ with safe_import_context() as import_ctx:
     import numpy as np
     from PIL import Image, ImageOps
     import download
+    import os
 
     make_blur = import_ctx.import_from("shared", "make_blur")
+
+URL = "https://archive.org/download/SitaStills"
+FILES = [
+    "01.RamShootsDemons.png",
+    "01.RishisBIG.png",
+    "01.SitaRamForest.png",
+    "02.RavSitaChariotSunset.png",
+    "03.HanuBurnsLankaBIG.png",
+    "04.Battlefield.png",
+    "04.RamaArmyBIG.png",
+    "05.RamSitaGods.png",
+    "05.SitaHanuBanana.png",
+    "06.RamHanuSitaRainReflect.png",
+    "07.RamExilesSitaNoir.png",
+    "07.SitaLaxmanChariotSwamp.png",
+    "08.BlueLandscape.png",
+    "09.SitaCriesARiver.png",
+    "10RunToEarth.png",
+]
 
 
 class Dataset(BaseDataset):
@@ -20,6 +40,7 @@ class Dataset(BaseDataset):
     # the cross product for each key in the dictionary.
     # A * I + noise ~ N(mu, sigma)
     parameters = {
+        "index": [0, 1, 2],
         "std_noise": [0.02],
         "size_blur": [27],
         "std_blur": [2.0],
@@ -32,6 +53,7 @@ class Dataset(BaseDataset):
 
     def __init__(
         self,
+        index=0,
         std_noise=0.02,
         size_blur=27,
         std_blur=8.0,
@@ -54,8 +76,8 @@ class Dataset(BaseDataset):
     def get_data(self):
         rng = np.random.RandomState(self.random_state)
         img = download.download(
-            "https://archive.org/download/SitaStills/01.RamShootsDemons.png",
-            "./cartoon/01.RamShootsDemons",
+            os.path.join(URL, FILES[self.index]),
+            os.path.join("./cartoon", FILES[self.index]),
             replace=False,
         )
         img = Image.open(img)
@@ -71,10 +93,10 @@ class Dataset(BaseDataset):
         elif self.type_n == "laplace":
             # noise ~ L(loc, scale)
             n = rng.laplace(0, self.std_noise, size=(height, width))
-        filt, A = make_blur(
+        A = make_blur(
             self.type_A, img.shape, self.size_blur, self.std_blur
         )
         Y = (A @ img.flatten()).reshape(img.shape) + n
-        data = dict(filt=filt, A=A, Y=Y, X_ref=img, sigma_f=self.std_noise)
+        data = dict(A=A, Y=Y, X_ref=img, sigma_f=self.std_noise)
 
         return data

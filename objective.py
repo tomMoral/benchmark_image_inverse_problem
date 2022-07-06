@@ -5,6 +5,11 @@ from benchopt import BaseObjective, safe_import_context
 with safe_import_context() as import_ctx:
     import numpy as np
 
+    try:
+        from torch import Tensor
+    except ImportError:
+        Tensor = None
+
 
 def psnr(rec, ref):
     """Compute the peak signal-to-noise ratio for grey images in [0, 1].
@@ -32,19 +37,22 @@ class Objective(BaseObjective):
         # Return one solution. This should be compatible with 'self.compute'.
         return np.zeros(self.X_ref)
 
-    def set_data(self, filt, A, Y, X_ref, sigma_f):
+    def set_data(self, A, Y, X_ref, sigma_f):
         # The keyword arguments of this function are the keys of the `data`
         # dict in the `get_data` function of the dataset.
         # They are customizable.
-        self.filt, self.A, = filt, A
+        self.A = A
         self.Y, self.X_ref, self.sigma_f = Y, X_ref, sigma_f
 
     def compute(self, X_rec):
+
+        if isinstance(X_rec, Tensor):
+            X_rec = X_rec.detach().cpu().numpy()
+
         # The arguments of this function are the outputs of the
         # `get_result` method of the solver.
         # They are customizable.
         mse, psnr_ = psnr(X_rec.flatten(), self.X_ref.flatten())
-
         return dict(value=mse, psnr=psnr_)
 
     def to_dict(self):
@@ -52,7 +60,7 @@ class Objective(BaseObjective):
         # for the `set_objective` method of the solver.
         # They are customizable.
         return dict(
-            filt=self.filt, A=self.A,
+            A=self.A,
             Y=self.Y, X_shape=self.X_ref.shape,
             sigma_f=self.sigma_f
         )

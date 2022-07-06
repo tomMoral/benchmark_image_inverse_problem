@@ -32,11 +32,11 @@ class Solver(BaseSolver):
         "tv_weight": [0.1],
     }
 
-    def set_objective(self, filt, A, Y, X_shape, sigma_f):
+    def set_objective(self, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.filt, self.A, self.Y, self.X_shape = filt, A, Y, X_shape
+        self.A, self.Y, self.X_shape = A, Y, X_shape
 
     @staticmethod
     def get_next(stop_val):
@@ -46,19 +46,16 @@ class Solver(BaseSolver):
         self,
         callback,
     ):
-        if torch.cuda.device_count() > 0:
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        A = self.A.to_torch(device=device)
+
+        if device == "cuda":
             dtype = torch.cuda.FloatTensor
         else:
             dtype = torch.FloatTensor
 
-        blur_operator = torch.nn.Conv2d(
-            1, 1, self.filt.shape, padding="same", bias=False
-        )
-        blur_operator.weight.data = np_to_torch(self.filt).type(dtype)
-        blur_operator.requires_grad_(False)
-
         TV_operator = torch.nn.Conv2d(1, 2, (3, 3), padding="same", bias=False)
-        TV_filt = torch.from_numpy(get_TV_filters())[:,None,:]
+        TV_filt = torch.from_numpy(get_TV_filters())[:, None, :]
         TV_operator.weight.data = TV_filt.type(dtype)
         TV_operator.requires_grad_(False)
 
@@ -101,9 +98,11 @@ class Solver(BaseSolver):
                 + self.reg_noise_std * torch.randn_like(noise_input_saved)
             )
             out = net(noise_input)
-            loss = mse(blur_operator(out), Y_torch)
+            loss = mse(A @ out, Y_torch)
             tv_pixel_norm = torch.norm(TV_operator(out), dim=1)
-            loss += self.tv_weight * mse(tv_pixel_norm, torch.zeros_like(tv_pixel_norm))
+            loss += self.tv_weight * mse(
+                tv_pixel_norm, torch.zeros_like(tv_pixel_norm)
+            )
 
             loss.backward()
             optimizer.step()
