@@ -11,7 +11,7 @@ with safe_import_context() as import_ctx:
 
 
 class Solver(BaseSolver):
-    """Gradient descent solver, optionally accelerated."""
+    """Deep Image Prior, original implementation"""
 
     name = "DIP"
 
@@ -82,6 +82,8 @@ class Solver(BaseSolver):
         out = net(noise_input_saved)
 
         while callback(torch_to_np(out)):
+            optimizer.zero_grad()
+
             noise_input = (
                 noise_input_saved
                 + self.reg_noise_std * torch.randn_like(noise_input_saved)
