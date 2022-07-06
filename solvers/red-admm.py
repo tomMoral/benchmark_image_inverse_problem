@@ -18,7 +18,7 @@ class Solver(BaseSolver):
         'denoiser_name': ['bm3d'],
         'tau': [1],
         'N': [50],
-        'm1': [1],
+        'm1': [200],
         'm2': [1],
         'beta': [0.001],
         'sigma': [1],
