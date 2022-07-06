@@ -36,16 +36,16 @@ class Solver(BaseSolver):
         self.sigma_f = sigma_f
 
     def run(self, callback):
-
+        # TODO : general initialisation (this will not work for SR)
         X_k = self.Y.copy()
-        U_k = self.Y.copy()
-        Y_k = self.Y.copy() # this will not work for SR
+        Y_k = self.Y.copy()  
+        U_k = self.Y.copy() * 0
         while callback(X_k):
             # we use ruy2019 notation 
             X_k = self.denoiser(Y_k-U_k, sigma=self.sigma_den) 
             Y_k = self.prox_f(X_k+U_k, alpha=self.alpha) 
             U_k = U_k + X_k - Y_k
-        self.X_rec = U_k
+        self.X_rec = X_k
 
     def get_result(self):
         # The outputs of this function are the arguments of the
