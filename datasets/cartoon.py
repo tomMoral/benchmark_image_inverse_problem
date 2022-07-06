@@ -23,7 +23,7 @@ class Dataset(BaseDataset):
         "std_noise": [0.02],
         "size_blur": [27],
         "std_blur": [2.0],
-        "subsampling": [4],
+        "subsampling": [10],
         "type_A": ["deblurring"],  # "denoising"],
         "type_n": [
             "gaussian",
