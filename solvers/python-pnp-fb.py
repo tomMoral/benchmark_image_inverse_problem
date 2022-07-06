@@ -3,6 +3,7 @@ from math import sqrt
 
 with safe_import_context() as import_ctx:
     import numpy as np
+    import torch
     get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
     load_denoiser = import_ctx.import_from('denoisers', 'load_denoiser')
 
@@ -42,10 +43,18 @@ class Solver(BaseSolver):
             X_rec = self.Y.reshape(self.X_shape)
         else:
             raise ValueError("unknown value for start.")
+        Y = self.Y
+        A = self.A
+
+        if self.denoiser_name == 'drunet_gray':
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            X_rec = torch.from_numpy(X_rec).to(device, torch.float32)
+            Y = torch.from_numpy(Y).to(device, torch.float32)
+            A = self.A.to_torch(device=device)
 
         while callback(X_rec):
             X_rec = X_rec.flatten()
-            u = X_rec - self.tau * self.A.T @ (self.A  @ X_rec - self.Y) / L
+            u = X_rec - self.tau * A.T @ (A  @ X_rec - Y) / L
             u = u.reshape(self.X_shape)
             X_rec = self.denoiser(image=u, sigma=sqrt(self.tau))
 
