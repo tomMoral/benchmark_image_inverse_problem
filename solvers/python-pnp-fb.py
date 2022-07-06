@@ -20,16 +20,16 @@ class Solver(BaseSolver):
         'start': ['zero', 'noisy']
     }
 
-    def skip(self, filt, A, Y, X_shape, sigma_f):
+    def skip(self, A, Y, X_shape, sigma_f):
         if self.start == "noisy" and A.shape[0] != A.shape[1]:
             return True, "Noisiy start need square A"
         return False, None
 
-    def set_objective(self, filt, A, Y, X_shape, sigma_f):
+    def set_objective(self, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.filt, self.A = filt, A
+        self.A = A
         self.Y, self.X_shape = Y.flatten(), X_shape
         self.denoiser = load_denoiser(self.denoiser_name)
 
