@@ -54,7 +54,7 @@ class CG_prox_solver():
             matvec=lambda x: self.A.T @ self.A @ x + s2_d_alpha * x
         )
         b = self.Aty + s2_d_alpha * zf
-        xinit = x0.flatten() if x0 else None
+        xinit = x0.flatten() if x0 is not None else None
         xhat, _ = cg(
             AtA_plus_alpha_s2_I, b=b, x0=xinit, tol=self.tol,
             maxiter=self.maxiter
