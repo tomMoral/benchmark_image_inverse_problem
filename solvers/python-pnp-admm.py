@@ -20,8 +20,8 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {
         'denoiser_name': ['bm3d', 'nlm'],
-        'lambda_r' : [0.1],
-        'alpha' : [0.5], # TODO : tune alpha/ lambda_r values ?
+        'alpha' : [0.1],
+        'sigma_den' : [0.2] 
                     }
 
     def set_objective(self, filt, A, Y, X_shape, sigma_f):
@@ -42,8 +42,7 @@ class Solver(BaseSolver):
         Y_k = self.Y.copy() # this will not work for SR
         while callback(X_k):
             # we use ruy2019 notation 
-            sigma_den = sqrt(self.alpha * self.lambda_r)
-            X_k = self.denoiser(Y_k-U_k, sigma=sigma_den) 
+            X_k = self.denoiser(Y_k-U_k, sigma=self.sigma_den) 
             Y_k = self.prox_f(X_k+U_k, alpha=self.alpha) 
             U_k = U_k + X_k - Y_k
         self.X_rec = U_k
