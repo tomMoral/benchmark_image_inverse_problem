@@ -93,10 +93,10 @@ class Dataset(BaseDataset):
         elif self.type_n == "laplace":
             # noise ~ L(loc, scale)
             n = rng.laplace(0, self.std_noise, size=(height, width))
-        filt, A = make_blur(
+        A = make_blur(
             self.type_A, img.shape, self.size_blur, self.std_blur
         )
         Y = (A @ img.flatten()).reshape(img.shape) + n
-        data = dict(filt=filt, A=A, Y=Y, X_ref=img, sigma_f=self.std_noise)
+        data = dict(A=A, Y=Y, X_ref=img, sigma_f=self.std_noise)
 
         return data
