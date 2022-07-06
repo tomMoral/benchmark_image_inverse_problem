@@ -98,8 +98,11 @@ def conv(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1, bi
             raise NotImplementedError('Undefined type: '.format(t))
     return sequential(*L)
 
+
 def uint2single(img):
     return np.float32(img/255.)
+
+
 # --------------------------------------------
 # inverse of pixel_shuffle
 # --------------------------------------------
@@ -374,7 +377,7 @@ class RRDB(nn.Module):
 class UNetRes(torch.nn.Module):
     def __init__(self, in_nc=1, out_nc=1, nc=[64, 128, 256, 512], nb=4, act_mode='R', downsample_mode='strideconv', upsample_mode='convtranspose'):
         super(UNetRes, self).__init__()
-        
+
         self.m_head = conv(in_nc, nc[0], bias=False, mode='C')
 
         # downsample

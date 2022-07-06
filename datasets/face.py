@@ -43,10 +43,10 @@ class Dataset(BaseDataset):
         rng = np.random.RandomState(self.random_state)
         img = misc.face(gray=True)[:: self.subsampling, :: self.subsampling]
         img = img / 255.0
-        filt, A = make_blur(
+        A = make_blur(
             self.type_A, img.shape, self.size_blur, self.std_blur
         )
         Y = (A @ img.flatten()).reshape(img.shape)
         Y += rng.normal(0, self.std_noise, size=img.shape)
 
-        return dict(filt=filt, A=A, Y=Y, X_ref=img, sigma_f=self.std_noise)
+        return dict(A=A, Y=Y, X_ref=img, sigma_f=self.std_noise)

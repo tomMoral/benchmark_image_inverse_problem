@@ -14,11 +14,11 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {'use_acceleration': [False, True]}
 
-    def set_objective(self, filt, A, Y, X_shape, sigma_f):
+    def set_objective(self, A, Y, X_shape, sigma_f):
         # The arguments of this function are the results of the
         # `to_dict` method of the objective.
         # They are customizable.
-        self.filt, self.A = filt, A
+        self.A = A
         self.Y, self.X_shape = Y.flatten(), X_shape
         self.sigma_f = sigma_f
 

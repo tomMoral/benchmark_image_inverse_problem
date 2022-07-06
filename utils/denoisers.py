@@ -62,7 +62,7 @@ def download_pretrained_model(model_dir='model_zoo',
         model_file.write_bytes(r.content)
         print('done!')
 
-        return model_file
+    return model_file
 
 
 class DrunetDenoiser(BaseDenoiser):
@@ -90,11 +90,10 @@ class DrunetDenoiser(BaseDenoiser):
         # img_L = uint2single(image)
         # img_L = img_L.reshape((img_L.shape[0],img_L.shape[1],1))
         # img_L = single2tensor4(img_L)
-        # img_L = torch.cat((img_L, torch.FloatTensor([15/255.])
-        # .repeat(1, 1, img_L.shape[2], img_L.shape[3])), dim=1)
         # img_L = img_L.to(device)
         with torch.no_grad():
-            return self.model(image)
+            img_L = torch.cat([image, 15/255 * torch.ones_like(image)], dim=0)
+            return self.model(img_L)
 
 
 #  : add denoiser optionnal parameters (eg dict input) ?
