@@ -43,6 +43,7 @@ class Solver(BaseSolver):
             X_rec = self.Y.reshape(self.X_shape)
         else:
             raise ValueError("unknown value for start.")
+
         Y = self.Y
         A = self.A
 
@@ -51,6 +52,7 @@ class Solver(BaseSolver):
             X_rec = torch.from_numpy(X_rec).to(device, torch.float32)
             Y = torch.from_numpy(Y).to(device, torch.float32)
             A = self.A.to_torch(device=device)
+            L = torch.from_numpy(Y).to(device, torch.float32)
 
         while callback(X_rec):
             X_rec = X_rec.flatten()
