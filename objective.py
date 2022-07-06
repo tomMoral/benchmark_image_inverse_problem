@@ -40,11 +40,11 @@ class Objective(BaseObjective):
         self.Y, self.X_ref, self.sigma_f = Y, X_ref, sigma_f
 
     def compute(self, X_rec):
+        
         # The arguments of this function are the outputs of the
         # `get_result` method of the solver.
         # They are customizable.
         mse, psnr_ = psnr(X_rec.flatten(), self.X_ref.flatten())
-
         return dict(value=mse, psnr=psnr_)
 
     def to_dict(self):
