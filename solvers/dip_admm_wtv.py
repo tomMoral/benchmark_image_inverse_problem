@@ -101,7 +101,16 @@ class Solver(BaseSolver):
         mu_t_v = torch.zeros_like(out)
 
         while callback(torch_to_np(out)):
-
+            
+            if self.optimizer == "SGD":
+                optimizer = torch.optim.SGD(
+                    net.parameters(), lr=self.learning_rate
+                )
+            elif self.optimizer == "Adam":
+                optimizer = torch.optim.Adam(
+                    net.parameters(), lr=self.learning_rate
+                )
+                
             for _ in range(int(self.inner_iterations)):
                 optimizer.zero_grad()
                 out = net(noise_input_saved)
@@ -114,7 +123,7 @@ class Solver(BaseSolver):
                     derivatives[:, 0, :, :], (t_h - mu_t_h).detach()
                 )
                 loss += (self.beta_t / 2) * mse(
-                    derivatives[:, 0, :, :], (t_v - mu_t_v).detach()
+                    derivatives[:, 1, :, :], (t_v - mu_t_v).detach()
                 )
 
                 loss.backward()

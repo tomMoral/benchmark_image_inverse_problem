@@ -115,7 +115,7 @@ class Solver(BaseSolver):
                     derivatives[:, 0, :, :], (t_h - mu_t_h).detach()
                 )
                 loss += (self.beta_t / 2) * mse(
-                    derivatives[:, 0, :, :], (t_v - mu_t_v).detach()
+                    derivatives[:, 1, :, :], (t_v - mu_t_v).detach()
                 )
 
                 loss.backward()
