@@ -45,5 +45,6 @@ class CG_prox_solver():
         s2_d_alpha = self.sigma2 / alpha
         AtA_plus_alpha_s2_I = LinearOperator(shape=(self.N, self.N), matvec=lambda x: self.A.T@ self.A @ x + s2_d_alpha * x)
         b = self.Aty + s2_d_alpha * zf
-        xhat, _ = cg(AtA_plus_alpha_s2_I, b=b, x0=x0.flatten(), tol=self.tol, maxiter=self.maxiter)
+        xinit = x0.flatten() if x0 else None
+        xhat, _ = cg(AtA_plus_alpha_s2_I, b=b, x0=xinit, tol=self.tol, maxiter=self.maxiter)
         return xhat.reshape(input_shape)
