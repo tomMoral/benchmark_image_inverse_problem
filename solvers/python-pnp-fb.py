@@ -18,14 +18,14 @@ class Solver(BaseSolver):
 
     # any parameter defined here is accessible as a class attribute
     parameters = {
-        "denoiser_name": ["bm3d", "nlm"],
+        "denoiser_name": ["bm3d", "nlm", "drunet_gray"],
         "tau": [0.01, 0.1],
         "start": ["zero", "noisy"],
     }
 
     def skip(self, A, Y, X_shape, sigma_f):
         if self.start == "noisy" and A.shape[0] != A.shape[1]:
-            return True, "Noisiy start need square A"
+            return True, "Noisy start need square A"
         return False, None
 
     def set_objective(self, A, Y, X_shape, sigma_f):
@@ -59,7 +59,10 @@ class Solver(BaseSolver):
             X_rec = X_rec.flatten()
             u = X_rec - self.tau * (A.T @ (A @ X_rec - Y)) / L
             u = u.reshape(self.X_shape)
-            X_rec = self.denoiser(image=u[None], sigma=sqrt(self.tau))
+            if self.denoiser_name == "drunet_gray":
+                X_rec = self.denoiser(image=u[None], sigma=sqrt(self.tau))
+            else:
+                X_rec = self.denoiser(u, sigma=sqrt(self.tau))
 
         self.X_rec = X_rec
 
