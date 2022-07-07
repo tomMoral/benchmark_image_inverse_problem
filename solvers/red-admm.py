@@ -15,7 +15,7 @@ class Solver(BaseSolver):
 
     # any parameter defined here is accessible as a class attribute
     parameters = {
-        'denoiser_name': ['bm3d'],
+        'denoiser_name': ['bm3d', 'nlm', 'drunet_gray'],
         'N': [50],
         'm1': [200],
         'm2': [1],
