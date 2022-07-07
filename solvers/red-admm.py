@@ -49,7 +49,7 @@ class Solver(BaseSolver):
             Y = torch.from_numpy(Y).to(device, torch.float32)
             A = self.A.to_torch(device=device)
 
-        print("Hello")
+        
         while callback(X_rec):
             # Part 1 - Prox operator for the data fitting term
             X_rec = X_rec.flatten()
@@ -68,7 +68,7 @@ class Solver(BaseSolver):
                 X_rec[X_rec < 0] = 0
                 X_rec[X_rec > 1] = 1
 
-            print("first looop")
+            
 
             X_rec = X_rec.reshape(self.X_shape)
 
@@ -84,7 +84,7 @@ class Solver(BaseSolver):
                 V_rec = 1/(self.beta + self.lambda_r) * (
                     self.lambda_r * V_tild + self.beta * Z_star
                 )
-            print("second looop")
+            
 
             # Part 3 - update multiplier
             u_rec += X_hat - V_rec
