@@ -5,6 +5,7 @@ from benchopt import BaseSolver, safe_import_context
 
 with safe_import_context() as import_ctx:
     import numpy as np
+    import torch
     get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
     load_denoiser = import_ctx.import_from('denoisers', 'load_denoiser')
     load_prox_df = import_ctx.import_from('proximal', 'load_prox_df')
@@ -21,7 +22,7 @@ class Solver(BaseSolver):
 
     # any parameter defined here is accessible as a class attribute
     parameters = {
-        'denoiser_name': ['bm3d', 'nlm'],
+        'denoiser_name': ['bm3d', 'nlm','drunet_gray'],
         'lambda_r': [0.5],
         'Kmax': [50]
     }
@@ -37,20 +38,19 @@ class Solver(BaseSolver):
         A = self.A
         self.sigmas_k = np.linspace(49/255, sigma_f, self.Kmax)
         if self.denoiser_name == 'drunet_gray':
-
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            Y = torch.from_numpy(Y).to(device, torch.float32)
-            A = self.A.to_torch(device=device)
-
+            self.Y = torch.from_numpy(Y).to(device, torch.float32)
+            self.A = self.A.to_torch(device=device)
         self.prox_f = load_prox_df(
-            A, self.Y, self.sigma_f, maxiter=100, tol=0.0001
+            self.A, self.Y, self.sigma_f, maxiter=100, tol=0.0001
         )
+            
 
 
     def run(self, callback):
 
-        X_k = self.Y.copy()
-        Z_k = self.Y.copy()  # this will not work for SR
+        X_k = self.Y.copy() if type(self.Y) is np.ndarray else self.Y.clone()
+        Z_k = self.Y.copy() if type(self.Y) is np.ndarray else self.Y.clone() # this will not work for SR
         i = 0
         while callback(X_k):
             sigma_k = self.sigmas_k[i] if i < self.Kmax else self.sigma_f

@@ -1,5 +1,6 @@
 
 from benchopt import safe_import_context
+from torch import unsqueeze
 
 with safe_import_context() as import_ctx:
     import requests
@@ -92,8 +93,9 @@ class DrunetDenoiser(BaseDenoiser):
         # img_L = single2tensor4(img_L)
         # img_L = img_L.to(device)
         with torch.no_grad():
+            image = image.unsqueeze(0)
             # sigma must be in [0, 1]
-            img_L = torch.cat([image, sigma * torch.ones_like(image)], dim=0).unsqueeze(0)
+            img_L = torch.cat([image, sigma * torch.ones_like(image)], dim=0)
             return self.model(img_L).squeeze()
 
 
