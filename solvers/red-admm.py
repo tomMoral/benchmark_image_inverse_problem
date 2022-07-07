@@ -16,12 +16,11 @@ class Solver(BaseSolver):
     # any parameter defined here is accessible as a class attribute
     parameters = {
         'denoiser_name': ['bm3d'],
-        'tau': [1],
         'N': [50],
         'm1': [200],
         'm2': [1],
         'beta': [0.001],
-        'sigma': [1],
+        'sigma_den': [0.05],
         'lambda_r': [0.5],  # [0.002], #0.2 pour 0.002
         'alpha': [2]
     }
@@ -36,7 +35,7 @@ class Solver(BaseSolver):
         self.sigma_f = sigma_f
 
     def run(self, callback):
-        Y, X_rec, V_rec = self.Y.flatten(), self.Y, self.Y
+        Y, X_rec, V_rec = self.Y.flatten(), self.Y.copy(), self.Y.copy() 
         u_rec = np.zeros(self.X_shape)
 
         A = self.A
@@ -59,10 +58,10 @@ class Solver(BaseSolver):
                 b = A.T @ Y + self.beta * Z_star
 
                 A_x_est = (
-                    A.T @ (A @ X_rec) / self.sigma + self.beta * X_rec
+                    A.T @ (A @ X_rec) / self.sigma_f + self.beta * X_rec
                 )
                 res = b - A_x_est
-                a_res = A.T @ (A @ res) / self.sigma + self.beta*res
+                a_res = A.T @ (A @ res) / self.sigma_f + self.beta*res
                 mu_opt = res @ res / (res @ a_res)
                 X_rec += mu_opt*res
                 X_rec[X_rec < 0] = 0
@@ -79,7 +78,7 @@ class Solver(BaseSolver):
             Z_star = X_rec + u_rec
             for _ in range(self.m2):
                 V_tild = self.denoiser(
-                    image=V_rec[None], sigma=self.sigma_f
+                    image=V_rec[None], sigma=self.sigma_den
                 )[0]
                 V_rec = 1/(self.beta + self.lambda_r) * (
                     self.lambda_r * V_tild + self.beta * Z_star
