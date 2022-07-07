@@ -4,21 +4,23 @@ from math import sqrt
 with safe_import_context() as import_ctx:
     import numpy as np
     import torch
-    get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
-    load_denoiser = import_ctx.import_from('denoisers', 'load_denoiser')
+
+    get_l2norm = import_ctx.import_from("shared", "get_l2norm")
+    load_denoiser = import_ctx.import_from("denoisers", "load_denoiser")
 
 
 class Solver(BaseSolver):
     """Gradient descent solver, optionally accelerated."""
-    name = 'pnp-fb'
 
-    stopping_strategy = 'callback'
+    name = "pnp-fb"
+
+    stopping_strategy = "callback"
 
     # any parameter defined here is accessible as a class attribute
     parameters = {
-        'denoiser_name': ['bm3d', 'nlm'],
-        'tau': [0.01, 0.1],
-        'start': ['zero', 'noisy']
+        "denoiser_name": ["bm3d", "nlm"],
+        "tau": [0.01, 0.1],
+        "start": ["zero", "noisy"],
     }
 
     def skip(self, A, Y, X_shape, sigma_f):
@@ -47,16 +49,15 @@ class Solver(BaseSolver):
         Y = self.Y
         A = self.A
 
-        if self.denoiser_name == 'drunet_gray':
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        if self.denoiser_name == "drunet_gray":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
             X_rec = torch.from_numpy(X_rec).to(device, torch.float32)
             Y = torch.from_numpy(Y).to(device, torch.float32)
             A = self.A.to_torch(device=device)
-            L = torch.from_numpy(Y).to(device, torch.float32)
 
         while callback(X_rec):
             X_rec = X_rec.flatten()
-            u = X_rec - self.tau * A.T @ (A  @ X_rec - Y) / L
+            u = X_rec - self.tau * (A.T @ (A @ X_rec - Y)) / L
             u = u.reshape(self.X_shape)
             X_rec = self.denoiser(image=u, sigma=sqrt(self.tau))
 
