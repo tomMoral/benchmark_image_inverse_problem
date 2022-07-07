@@ -31,16 +31,22 @@ class Solver(BaseSolver):
         self.A, self.Y, self.X_shape = A, Y, X_shape
         self.sigma_f = sigma_f
         self.denoiser = load_denoiser(self.denoiser_name)
-
+        Y = self.Y
+        A = self.A
         # TODO : add tolerance and maxiter as hyperparameters?
-        self.prox_f = load_prox_df(self.A, self.Y, self.sigma_f, maxiter=100, tol=0.0001)
+        if self.denoiser_name == 'drunet_gray':
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            Y = torch.from_numpy(Y).to(device, torch.float32)
+            A = self.A.to_torch(device=device)
+
+        self.prox_f = load_prox_df(A, Y, self.sigma_f, maxiter=100, tol=0.0001)
         self.sigma_f = sigma_f
 
     def run(self, callback):
         # TODO : general initialisation (this will not work for SR)
-        X_k = self.Y.copy()
-        Y_k = self.Y.copy()  
-        U_k = self.Y.copy() * 0
+        X_k = Y.copy()
+        Y_k = Y.copy()  
+        U_k = Y.copy() * 0
         while callback(X_k):
             # we use ruy2019 notation 
             X_k = self.denoiser(Y_k-U_k, sigma=self.sigma_den) 
