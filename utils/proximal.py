@@ -1,5 +1,14 @@
-from scipy.sparse.linalg import cg
-from scipy.sparse.linalg import LinearOperator
+from benchopt import safe_import_context
+
+#from utils.shared import TorchLinearOperator
+
+with safe_import_context() as import_ctx:
+    #from utils.shared import TorchLinearOperator
+    TorchLinearOperator = import_ctx.import_from('shared', 'TorchLinearOperator')
+    from scipy.sparse.linalg import cg
+    from scipy.sparse.linalg import LinearOperator
+    import torch
+    import numpy as np
 
 
 def load_prox_df(A, y, sigma, maxiter=None, tol=None):
@@ -31,6 +40,7 @@ class CG_prox_solver():
         self.maxiter = maxiter
         self.M, self.N = A.shape
         self.tol = tol
+        self.on_torch = (A.__class__.__name__ == 'TorchLinearOperator')
 
     def __call__(self, z, alpha, x0=None):
         """
@@ -49,14 +59,27 @@ class CG_prox_solver():
         input_shape = z.shape
         zf = z.flatten()
         s2_d_alpha = self.sigma2 / alpha
-        AtA_plus_alpha_s2_I = LinearOperator(
-            shape=(self.N, self.N),
-            matvec=lambda x: self.A.T @ self.A @ x + s2_d_alpha * x
-        )
         b = self.Aty + s2_d_alpha * zf
+        if self.on_torch:
+            # TODO :  remove find a way to remove torch.from_numpy()?
+            AtA_plus_alpha_s2_I = LinearOperator(
+                shape=(self.N, self.N),
+                matvec=lambda x: self.A.T @ self.A @ torch.from_numpy(x) + s2_d_alpha * torch.from_numpy(x),
+                dtype=np.float32
+            )
+        else:
+            AtA_plus_alpha_s2_I = LinearOperator(
+                shape=(self.N, self.N),
+                matvec=lambda x: self.A.T @ self.A @ x + s2_d_alpha * x,
+                dtype=np.float32
+            )
         xinit = x0.flatten() if x0 is not None else None
         xhat, _ = cg(
             AtA_plus_alpha_s2_I, b=b, x0=xinit, tol=self.tol,
             maxiter=self.maxiter
         )
-        return xhat.reshape(input_shape)
+        xhat = xhat.reshape(input_shape)
+        if self.on_torch:
+            return torch.from_numpy(xhat).to(zf.device)
+        else:
+            return xhat

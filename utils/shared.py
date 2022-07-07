@@ -26,6 +26,7 @@ class TorchLinearOperator:
 
         if isinstance(other, TorchLinearOperator):
             return TorchLinearOperator(
+                shape=(self.shape[0], other.shape[1]),
                 matvec=lambda x: self.matvec(other.matvec(x)),
                 matmat=lambda x: self.matmat(other.matmat(x)),
                 rmatvec=lambda x: self.rmatvec(other.rmatvec(x)),
