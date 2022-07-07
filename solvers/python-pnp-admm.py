@@ -6,6 +6,7 @@ from math import sqrt
 
 with safe_import_context() as import_ctx:
     import numpy as np
+    import torch
     get_l2norm = import_ctx.import_from('shared', 'get_l2norm')
     load_denoiser = import_ctx.import_from('denoisers', 'load_denoiser')
     load_prox_df = import_ctx.import_from('proximal', 'load_prox_df')
