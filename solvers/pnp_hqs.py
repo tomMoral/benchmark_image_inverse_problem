@@ -34,10 +34,18 @@ class Solver(BaseSolver):
         self.sigma_f = sigma_f
         self.denoiser = load_denoiser(self.denoiser_name)
         # TODO : add tolerance and maxiter as hyperparameters?
-        self.prox_f = load_prox_df(
-            self.A, self.Y, self.sigma_f, maxiter=100, tol=0.0001
-        )
+        A = self.A
         self.sigmas_k = np.linspace(49/255, sigma_f, self.Kmax)
+        if self.denoiser_name == 'drunet_gray':
+
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            Y = torch.from_numpy(Y).to(device, torch.float32)
+            A = self.A.to_torch(device=device)
+
+        self.prox_f = load_prox_df(
+            A, self.Y, self.sigma_f, maxiter=100, tol=0.0001
+        )
+
 
     def run(self, callback):
 
