@@ -20,8 +20,8 @@ class Solver(BaseSolver):
         'm1': [200],
         'm2': [1],
         'beta': [0.001],
-        'sigma_den': [0.05],
-        'lambda_r': [0.5],  # [0.002], #0.2 pour 0.002
+        'sigma_den': [0.016],
+        'lambda_r': [0.002],  # [0.002], #0.2 pour 0.002
         'alpha': [2]
     }
 
@@ -33,6 +33,7 @@ class Solver(BaseSolver):
         self.Y, self.X_shape = Y, X_shape
         self.denoiser = load_denoiser(self.denoiser_name)
         self.sigma_f = sigma_f
+        #self.sigma_f = 1
 
     def run(self, callback):
         Y, X_rec, V_rec = self.Y.flatten(), self.Y.copy(), self.Y.copy() 
