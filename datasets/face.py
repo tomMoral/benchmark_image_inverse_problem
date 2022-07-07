@@ -4,7 +4,8 @@ from benchopt import safe_import_context, BaseDataset
 with safe_import_context() as import_ctx:
     import numpy as np
     from scipy import misc
-    make_blur = import_ctx.import_from('shared', 'make_blur')
+
+    make_blur = import_ctx.import_from("shared", "make_blur")
 
 
 class Dataset(BaseDataset):
@@ -18,7 +19,7 @@ class Dataset(BaseDataset):
         "std_noise": [0.02],
         "size_blur": [27],
         "std_blur": [2.0],
-        "subsampling": [1],
+        "subsampling": [4],
         "type_A": ["deblurring"],  # , "denoising"],
     }
 
@@ -43,9 +44,7 @@ class Dataset(BaseDataset):
         rng = np.random.RandomState(self.random_state)
         img = misc.face(gray=True)[:: self.subsampling, :: self.subsampling]
         img = img / 255.0
-        A = make_blur(
-            self.type_A, img.shape, self.size_blur, self.std_blur
-        )
+        A = make_blur(self.type_A, img.shape, self.size_blur, self.std_blur)
         Y = (A @ img.flatten()).reshape(img.shape)
         Y += rng.normal(0, self.std_noise, size=img.shape)
 

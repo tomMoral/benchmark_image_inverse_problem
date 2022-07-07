@@ -59,7 +59,7 @@ class Solver(BaseSolver):
             X_rec = X_rec.flatten()
             u = X_rec - self.tau * (A.T @ (A @ X_rec - Y)) / L
             u = u.reshape(self.X_shape)
-            X_rec = self.denoiser(image=u, sigma=sqrt(self.tau))
+            X_rec = self.denoiser(image=u[None], sigma=sqrt(self.tau))
 
         self.X_rec = X_rec
 
