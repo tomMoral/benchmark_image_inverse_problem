@@ -78,9 +78,16 @@ class Solver(BaseSolver):
             # Part 2 - denoising
             Z_star = X_rec + u_rec
             for _ in range(self.m2):
-                V_tild = self.denoiser(
-                    image=V_rec[None], sigma=self.sigma_f
-                )[0]
+
+                if self.denoiser_name == 'drunet_gray':
+                    V_tild = self.denoiser(
+                        image=V_rec[None], sigma=self.sigma_f
+                    )[0]
+                else:
+                    V_tild = self.denoiser(
+                        image=V_rec, sigma=self.sigma_f
+                    )[0]
+
                 V_rec = 1/(self.beta + self.lambda_r) * (
                     self.lambda_r * V_tild + self.beta * Z_star
                 )
